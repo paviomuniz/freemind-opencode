@@ -63,6 +63,8 @@ import freemind.modes.MindMapCloud;
 import freemind.modes.MindMapNode;
 import freemind.modes.NodeAdapter;
 import freemind.preferences.FreemindPropertyListener;
+import freemind.ui.theme.ThemeColorUtil;
+import freemind.ui.theme.ThemeManager;
 
 /**
  * This class represents a single Node of a MindMap (in analogy to
@@ -81,11 +83,19 @@ public class NodeView extends JComponent implements TreeModelListener {
 	protected MindMapNode model;
 	protected MapView mapView;
 	private MainView mainView;
-	protected final static Color dragColor = Color.lightGray; // the Color of
-																// appearing
-																// GradientBox
-																// on
-																// drag over
+	// Theme-aware drag highlight color - initialized lazily to allow theme loading
+	protected static Color dragColor = null;
+	
+	/**
+	 * Gets the theme-aware drag highlight color.
+	 * @return the drag color appropriate for the current theme
+	 */
+	protected static Color getDragColor() {
+		if (dragColor == null) {
+			dragColor = ThemeColorUtil.getHoverBackground(Color.lightGray);
+		}
+		return dragColor;
+	}
 	private boolean isLong = false;
 
 	public final static int DRAGGED_OVER_NO = 0;

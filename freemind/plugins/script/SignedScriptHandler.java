@@ -170,7 +170,8 @@ public class SignedScriptHandler {
 		if (content.mSignature != null) {
 			try {
 				Signature instanceVerify = Signature.getInstance("SHA1withDSA");
-				if (content.mKeyName == null) {
+				if (content.mKeyName == null
+					|| FREEMIND_SCRIPT_KEY_NAME.equals(content.mKeyName)) {
 					/**
 					 * This is the FreeMind public key. keytool -v -rfc
 					 * -exportcert -alias freemindscriptkey
@@ -205,8 +206,15 @@ public class SignedScriptHandler {
 					}
 				} else {
 					initializeKeystore(null);
-					instanceVerify.initVerify(mKeyStore
-							.getCertificate(content.mKeyName));
+					if (mKeyStore == null) {
+						return false;
+					}
+					Certificate certificate = mKeyStore
+							.getCertificate(content.mKeyName);
+					if (certificate == null) {
+						return false;
+					}
+					instanceVerify.initVerify(certificate);
 				}
 				instanceVerify.update(content.mScript.getBytes());
 				boolean verify = instanceVerify.verify(Tools

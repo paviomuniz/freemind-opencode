@@ -78,6 +78,8 @@ import freemind.modes.MindMapLink;
 import freemind.modes.MindMapNode;
 import freemind.modes.ViewAbstraction;
 import freemind.preferences.FreemindPropertyListener;
+import freemind.ui.theme.ThemeColorUtil;
+import freemind.ui.theme.ThemeManager;
 
 /**
  * This class represents the view of a whole MindMap (in analogy to class
@@ -300,63 +302,19 @@ public class MapView extends JPanel implements ViewAbstraction, Printable, Autos
 		mCenterNodeTimer = new Timer();
 		// initialize the standard colors.
 		if (standardNodeTextColor == null) {
-			try {
-				String stdcolor = mFeedback.getProperty(
-						FreeMind.RESOURCES_BACKGROUND_COLOR);
-				standardMapBackgroundColor = Tools.xmlToColor(stdcolor);
-			} catch (Exception ex) {
-				freemind.main.Resources.getInstance().logException(ex);
-				standardMapBackgroundColor = Color.WHITE;
-			}
-			try {
-				String stdcolor = mFeedback.getProperty(
-						FreeMind.RESOURCES_NODE_TEXT_COLOR);
-				standardNodeTextColor = Tools.xmlToColor(stdcolor);
-			} catch (Exception ex) {
-				freemind.main.Resources.getInstance().logException(ex);
-				standardSelectColor = Color.WHITE;
-			}
-			// initialize the selectedColor:
-			try {
-				String stdcolor = mFeedback.getProperty(
-						FreeMind.RESOURCES_SELECTED_NODE_COLOR);
-				standardSelectColor = Tools.xmlToColor(stdcolor);
-			} catch (Exception ex) {
-				freemind.main.Resources.getInstance().logException(ex);
-				standardSelectColor = Color.BLUE.darker();
-			}
-
-			// initialize the selectedTextColor:
-			try {
-				String stdtextcolor = mFeedback.getProperty(
-						FreeMind.RESOURCES_SELECTED_NODE_RECTANGLE_COLOR);
-				standardSelectRectangleColor = Tools.xmlToColor(stdtextcolor);
-			} catch (Exception ex) {
-				freemind.main.Resources.getInstance().logException(ex);
-				standardSelectRectangleColor = Color.WHITE;
-			}
-			try {
-				String drawCircle = mFeedback.getProperty(
-						FreeMind.RESOURCE_DRAW_RECTANGLE_FOR_SELECTION);
-				standardDrawRectangleForSelection = Tools
-						.xmlToBoolean(drawCircle);
-			} catch (Exception ex) {
-				freemind.main.Resources.getInstance().logException(ex);
-				standardDrawRectangleForSelection = false;
-			}
-
-			try {
-				String printOnWhite = mFeedback.getProperty(
-						FreeMind.RESOURCE_PRINT_ON_WHITE_BACKGROUND);
-				printOnWhiteBackground = Tools.xmlToBoolean(printOnWhite);
-			} catch (Exception ex) {
-				freemind.main.Resources.getInstance().logException(ex);
-				printOnWhiteBackground = true;
-			}
+			initializeColors();
 			// only created once:
 			createPropertyChangeListener();
 			// initialize antializing:
 			propertyChangeListener.propertyChanged(FreeMindCommon.RESOURCE_ANTIALIAS, mFeedback.getProperty(FreeMindCommon.RESOURCE_ANTIALIAS), null);
+			
+			// Register for theme changes
+			ThemeManager.getInstance().setThemeChangeListener(new ThemeManager.ThemeChangeListener() {
+				public void onThemeChanged(String newTheme, java.util.Map<String, String> variables) {
+					// Update colors when theme changes
+					updateThemeColors();
+				}
+			});
 		}
 		this.setAutoscrolls(true);
 
@@ -414,6 +372,88 @@ public class MapView extends JPanel implements ViewAbstraction, Printable, Autos
 				"disable_cursor_move_paper");
 
 		addComponentListener(new ResizeListener());
+	}
+
+	/**
+	 * Initialize colors with theme-aware fallbacks
+	 */
+	private void initializeColors() {
+		// Get theme-aware fallback colors
+		Color fallbackBg = ThemeColorUtil.getCanvasBackground(Color.WHITE);
+		Color fallbackSelect = ThemeColorUtil.getSelectionColor(Color.BLUE.darker());
+		Color fallbackSelectRect = ThemeColorUtil.getTextPrimary(Color.WHITE);
+		Color fallbackText = ThemeColorUtil.getTextPrimary(Color.BLACK);
+		
+		try {
+			String stdcolor = mFeedback.getProperty(FreeMind.RESOURCES_BACKGROUND_COLOR);
+			standardMapBackgroundColor = Tools.xmlToColor(stdcolor);
+		} catch (Exception ex) {
+			freemind.main.Resources.getInstance().logException(ex);
+			standardMapBackgroundColor = fallbackBg;
+		}
+		
+		try {
+			String stdcolor = mFeedback.getProperty(FreeMind.RESOURCES_NODE_TEXT_COLOR);
+			standardNodeTextColor = Tools.xmlToColor(stdcolor);
+		} catch (Exception ex) {
+			freemind.main.Resources.getInstance().logException(ex);
+			standardNodeTextColor = fallbackText;
+		}
+		
+		try {
+			String stdcolor = mFeedback.getProperty(FreeMind.RESOURCES_SELECTED_NODE_COLOR);
+			standardSelectColor = Tools.xmlToColor(stdcolor);
+		} catch (Exception ex) {
+			freemind.main.Resources.getInstance().logException(ex);
+			standardSelectColor = fallbackSelect;
+		}
+
+		try {
+			String stdtextcolor = mFeedback.getProperty(FreeMind.RESOURCES_SELECTED_NODE_RECTANGLE_COLOR);
+			standardSelectRectangleColor = Tools.xmlToColor(stdtextcolor);
+		} catch (Exception ex) {
+			freemind.main.Resources.getInstance().logException(ex);
+			standardSelectRectangleColor = fallbackSelectRect;
+		}
+		
+		try {
+			String drawCircle = mFeedback.getProperty(FreeMind.RESOURCE_DRAW_RECTANGLE_FOR_SELECTION);
+			standardDrawRectangleForSelection = Tools.xmlToBoolean(drawCircle);
+		} catch (Exception ex) {
+			freemind.main.Resources.getInstance().logException(ex);
+			standardDrawRectangleForSelection = false;
+		}
+
+		try {
+			String printOnWhite = mFeedback.getProperty(FreeMind.RESOURCE_PRINT_ON_WHITE_BACKGROUND);
+			printOnWhiteBackground = Tools.xmlToBoolean(printOnWhite);
+		} catch (Exception ex) {
+			freemind.main.Resources.getInstance().logException(ex);
+			printOnWhiteBackground = true;
+		}
+	}
+	
+	/**
+	 * Update colors when theme changes
+	 */
+	private void updateThemeColors() {
+		// Update fallback colors based on new theme
+		Color fallbackBg = ThemeColorUtil.getCanvasBackground(Color.WHITE);
+		
+		// Only update if not overridden by user properties
+		try {
+			String stdcolor = mFeedback.getProperty(FreeMind.RESOURCES_BACKGROUND_COLOR);
+			if (stdcolor == null || stdcolor.isEmpty()) {
+				standardMapBackgroundColor = fallbackBg;
+				this.setBackground(standardMapBackgroundColor);
+			}
+		} catch (Exception ex) {
+			standardMapBackgroundColor = fallbackBg;
+			this.setBackground(standardMapBackgroundColor);
+		}
+		
+		// Force repaint to apply new colors
+		repaint();
 	}
 
 	/**

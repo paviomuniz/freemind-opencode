@@ -27,6 +27,7 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 
 import freemind.main.Tools;
+import freemind.ui.theme.ThemeColorUtil;
 
 /**
  * This class represents a sharp Edge of a MindMap.
@@ -81,7 +82,12 @@ public class SharpBezierEdgeView extends EdgeView {
 	}
 
 	public Color getColor() {
-		return getModel().getColor();
+		Color edgeColor = getModel().getColor();
+		// Use theme-aware color if no specific edge color is set
+		if (edgeColor == null) {
+			edgeColor = ThemeColorUtil.getTextSecondary(Color.GRAY);
+		}
+		return edgeColor;
 	}
 
 	protected void createStart() {

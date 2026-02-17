@@ -94,6 +94,9 @@ public class JOptionalSplitPane extends JPanel {
 					if (getLastDividerPosition() >= 0) {
 						// Restore divider location
 						splitPane.setDividerLocation(getLastDividerPosition());
+					} else {
+						// Set default divider location (50% split)
+						splitPane.setDividerLocation(0.5);
 					}
 					add(mBasicComponent, BorderLayout.CENTER);
 					revalidate();

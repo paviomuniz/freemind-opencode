@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Ant-Version: Apache Ant 1.10.15
+Created-By: Joerg Mueller, Daniel Polansky, Christian Foltin, Dimitry 
+ Polivaev, and others.
+Built-By: pmuniz6806
+Built-Number: 74
+Main-Class: freemind.main.FreeMindStarter
+Class-Path: freemind.jar .. commons-lang-2.0.jar jgoodies-forms-1.8.0.
+ jar jgoodies-common-1.8.1.jar jibx/jibx-run.jar jibx/xpp3.jar jibx-ru
+ n.jar xpp3.jar bindings.jar jortho.jar xalan.jar serializer.jar xml-a
+ pis.jar xercesImpl.jar SimplyHTML/gnu-regexp-1.1.4.jar SimplyHTML/Sim
+ plyHTML.jar jsoup-1.10.3.jar
+

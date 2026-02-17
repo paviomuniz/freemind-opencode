@@ -117,8 +117,7 @@ class FilterToolbar extends FreeMindToolBar {
 
 	private class EditFilterAction extends AbstractAction {
 		EditFilterAction() {
-			super("", freemind.view.ImageFactory.getInstance().createIcon(Resources.getInstance().getResource(
-					"images/Btn_edit.gif")));
+			super("", freemind.view.ImageFactory.getInstance().createSVGIcon("editfilter", 24));
 			putValue(SHORT_DESCRIPTION, Resources.getInstance()
 					.getResourceString("filter_edit_description"));
 		}
@@ -153,8 +152,7 @@ class FilterToolbar extends FreeMindToolBar {
          *
          */
 		UnfoldAncestorsAction() {
-			super("", freemind.view.ImageFactory.getInstance().createIcon(Resources.getInstance().getResource(
-					"images/unfold.png")));
+			super("", freemind.view.ImageFactory.getInstance().createSVGIcon("unfold", 24));
 		}
 
 		private void unfoldAncestors(MindMapNode parent) {

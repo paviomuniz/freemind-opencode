@@ -66,9 +66,22 @@ public abstract class MindmapAction extends FreemindAction  {
 	 */
 	public MindmapAction(String title, String iconPath,
 			final MindMapController mindMapController) {
-		this(mindMapController.getText(title), (iconPath == null) ? null
-				: freemind.view.ImageFactory.getInstance().createIcon(mindMapController.getResource(iconPath)),
-				mindMapController);
+		// Delegate to constructor with Icon
+		this(mindMapController.getText(title), getIconFromPath(iconPath), mindMapController);
+	}
+	
+	/**
+	 * Extracts icon name from path and creates SVG icon.
+	 */
+	private static Icon getIconFromPath(String iconPath) {
+		if (iconPath == null || !iconPath.endsWith(".png")) {
+			return null;
+		}
+		int slashIndex = iconPath.lastIndexOf('/');
+		int backslashIndex = iconPath.lastIndexOf('\\');
+		int startIndex = Math.max(slashIndex, backslashIndex) + 1;
+		String iconName = iconPath.substring(startIndex, iconPath.length() - 4); // remove ".png"
+		return freemind.view.ImageFactory.getInstance().createSVGIcon(iconName, 24);
 	}
 
 	public void addActor(ActorXml actor) {

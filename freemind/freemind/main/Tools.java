@@ -399,6 +399,28 @@ public class Tools {
 		}
 		String baseString = base.getFile();
 		String targetString = target.getFile();
+		// On Windows, check if paths are on different drives
+		// URLs on Windows have format like /C:/Users/..., so we check for /X: pattern
+		if (isWindows() && baseString.length() > 2 && targetString.length() > 2
+				&& baseString.charAt(0) == '/'
+				&& targetString.charAt(0) == '/'
+				&& baseString.charAt(2) == ':'
+				&& targetString.charAt(2) == ':') {
+			// Compare drive letters (case insensitive)
+			if (Character.toUpperCase(baseString.charAt(1))
+					!= Character.toUpperCase(targetString.charAt(1))) {
+				// Return the absolute path in Windows format, not URL format
+				// The URL path is like /O:/Users/... so we remove leading / and use backslashes
+				String path = targetString.substring(1).replace('/', '\\');
+				try {
+					// URL-decode the path to handle special characters properly
+					path = java.net.URLDecoder.decode(path, "UTF-8");
+				} catch (java.io.UnsupportedEncodingException e) {
+					// Fall through with encoded path
+				}
+				return path;
+			}
+		}
 		String result = "";
 		// remove filename from URL
 		targetString = targetString.substring(0,

@@ -144,6 +144,31 @@ public class MindIcon implements Comparable<MindIcon>, IconInformation {
 		if (associatedIcon != null)
 			return associatedIcon;
 		if (name != null) {
+			// Try emoji first (for emoji icon names)
+			freemind.view.EmojiIcon emojiIcon = freemind.view.EmojiIcon.getByName(name, 24);
+			if (emojiIcon != null) {
+				ImageIcon imageIcon = emojiIcon.toImageIcon();
+				setIcon(imageIcon);
+				return imageIcon;
+			}
+			
+			// Try SVG first
+			javax.swing.Icon svgIcon = freemind.view.ImageFactory.getInstance().createSVGIcon(name, 24);
+			if (svgIcon != null && svgIcon instanceof freemind.view.SVGIcon && 
+					!((freemind.view.SVGIcon)svgIcon).isPlaceholder()) {
+				// SVG found and is not placeholder - convert to ImageIcon
+				java.awt.Image img = new java.awt.image.BufferedImage(
+						svgIcon.getIconWidth(), svgIcon.getIconHeight(), 
+						java.awt.image.BufferedImage.TYPE_INT_ARGB);
+				java.awt.Graphics2D g = ((java.awt.image.BufferedImage)img).createGraphics();
+				svgIcon.paintIcon(null, g, 0, 0);
+				g.dispose();
+				ImageIcon imageIcon = new ImageIcon(img);
+				setIcon(imageIcon);
+				return imageIcon;
+			}
+			
+			// Fall back to PNG
 			URL imageURL = Resources.getInstance().getResource(
 					getIconFileName());
 			if (imageURL == null) { // As standard icon not found, try user's

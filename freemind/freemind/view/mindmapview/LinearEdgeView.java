@@ -24,6 +24,8 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Stroke;
 
+import freemind.ui.theme.ThemeColorUtil;
+
 /**
  * This class represents a single Edge of a MindMap.
  */
@@ -67,6 +69,11 @@ public class LinearEdgeView extends EdgeView {
 	}
 
 	public Color getColor() {
-		return getModel().getColor();
+		Color edgeColor = getModel().getColor();
+		// Use theme-aware color if no specific edge color is set
+		if (edgeColor == null) {
+			edgeColor = ThemeColorUtil.getTextSecondary(Color.GRAY);
+		}
+		return edgeColor;
 	}
 }

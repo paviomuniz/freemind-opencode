@@ -69,13 +69,13 @@ class RootMainView extends MainView {
 		if (draggedOver == NodeView.DRAGGED_OVER_SON) {
 			graphics.setPaint(new GradientPaint(getWidth() / 4, 0,
 					getNodeView().getMap().getBackground(), getWidth() * 3 / 4,
-					0, NodeView.dragColor));
+					0, NodeView.getDragColor()));
 			graphics.fillRect(getWidth() / 4, 0, getWidth() - 1,
 					getHeight() - 1);
 		} else if (draggedOver == NodeView.DRAGGED_OVER_SON_LEFT) {
 			graphics.setPaint(new GradientPaint(getWidth() * 3 / 4, 0,
 					getNodeView().getMap().getBackground(), getWidth() / 4, 0,
-					NodeView.dragColor));
+					NodeView.getDragColor()));
 			graphics.fillRect(0, 0, getWidth() * 3 / 4, getHeight() - 1);
 		}
 	}

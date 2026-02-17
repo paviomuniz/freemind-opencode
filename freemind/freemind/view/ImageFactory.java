@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import freemind.main.Resources;
@@ -79,5 +80,36 @@ public class ImageFactory {
 			}
 		}
 		return createIcon(Resources.getInstance().getResource(pFilePath));
+	}
+
+	/**
+	 * Creates an icon with SVG support.
+	 * First tries to load an SVG icon, falls back to PNG if not found.
+	 * 
+	 * @param iconName the name of the icon (without extension)
+	 * @param size the desired icon size
+	 * @return Icon (SVGIcon or ImageIcon)
+	 */
+	public Icon createSVGIcon(String iconName, int size) {
+		// Check if SVG version exists
+		if (SVGIcon.exists(iconName)) {
+			return new SVGIcon(iconName, size);
+		}
+		
+		// Fall back to PNG
+		String pngPath = "images/" + iconName + ".png";
+		URL url = Resources.getInstance().getResource(pngPath);
+		if (url != null) {
+			ImageIcon icon = createIcon(url);
+			// Scale to requested size if needed
+			if (icon.getIconWidth() != size || icon.getIconHeight() != size) {
+				java.awt.Image img = icon.getImage().getScaledInstance(size, size, java.awt.Image.SCALE_SMOOTH);
+				return new ImageIcon(img);
+			}
+			return icon;
+		}
+		
+		// Return placeholder if nothing found
+		return new SVGIcon(iconName, size);
 	}
 }

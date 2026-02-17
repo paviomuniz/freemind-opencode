@@ -39,6 +39,8 @@ import javax.swing.SwingUtilities;
 
 import freemind.main.FreeMind;
 import freemind.modes.ModeController;
+import freemind.ui.theme.ThemeColorUtil;
+import freemind.ui.theme.ThemeManager;
 import freemind.view.MapModule;
 
 /**
@@ -223,22 +225,25 @@ public class MenuBar extends JMenuBar {
 		menuHolder.addSeparator(POPUP_MENU);
 		JMenuItem newPopupItem;
 
+		// Use theme-aware muted color for special menu items
+		Color specialItemColor = ThemeColorUtil.getTextSecondary(new Color(100, 80, 80));
+
 		if (c.getFrame().isApplet()) {
 			// We have enabled hiding of menubar only in applets. It it because
 			// when we hide menubar in application, the key accelerators from
 			// menubar do not work.
 			newPopupItem = menuHolder.addAction(c.toggleMenubar, POPUP_MENU
 					+ "toggleMenubar");
-			newPopupItem.setForeground(new Color(100, 80, 80));
+			newPopupItem.setForeground(specialItemColor);
 		}
 
 		newPopupItem = menuHolder.addAction(c.toggleToolbar, POPUP_MENU
 				+ "toggleToolbar");
-		newPopupItem.setForeground(new Color(100, 80, 80));
+		newPopupItem.setForeground(specialItemColor);
 
 		newPopupItem = menuHolder.addAction(c.toggleLeftToolbar, POPUP_MENU
 				+ "toggleLeftToolbar");
-		newPopupItem.setForeground(new Color(100, 80, 80));
+		newPopupItem.setForeground(specialItemColor);
 	}
 
 	private void updateMapsMenu(StructuredMenuHolder holder, String basicKey) {
@@ -358,8 +363,11 @@ public class MenuBar extends JMenuBar {
 	private void updateViewMenu() {
 		menuHolder.addAction(c.toggleToolbar, VIEW_MENU + "toolbars/toggleToolbar");
 		menuHolder.addAction(c.toggleLeftToolbar, VIEW_MENU + "toolbars/toggleLeftToolbar");
-
+		
 		menuHolder.addSeparator(VIEW_MENU);
+		
+		// Theme toggle
+		menuHolder.addAction(c.toggleTheme, VIEW_MENU + "theme/toggleTheme");
 
 		menuHolder.addAction(c.showSelectionAsRectangle, VIEW_MENU+ "general/selectionAsRectangle");
 

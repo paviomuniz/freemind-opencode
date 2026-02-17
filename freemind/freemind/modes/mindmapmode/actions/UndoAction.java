@@ -50,8 +50,8 @@ public class UndoAction extends AbstractXmlAction {
 	protected static Logger logger;
 
 	public UndoAction(MindMapController controller) {
-		this(controller, controller.getText("undo"), freemind.view.ImageFactory.getInstance().createIcon(
-				controller.getResource("images/undo.png")), controller);
+		this(controller, controller.getText("undo"), freemind.view.ImageFactory.getInstance().createSVGIcon(
+				"undo", 24), controller);
 		this.controller = controller;
 		if (logger == null) {
 			logger = controller.getFrame()

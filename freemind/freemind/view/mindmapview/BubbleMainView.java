@@ -25,10 +25,13 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.RenderingHints;
 import java.awt.Stroke;
+import java.awt.geom.RoundRectangle2D;
 
 import freemind.main.Tools;
 import freemind.modes.MindMapNode;
+import freemind.ui.theme.ThemeManager;
 
 @SuppressWarnings("serial")
 class BubbleMainView extends MainView {
@@ -53,36 +56,100 @@ class BubbleMainView extends MainView {
 			return;
 
 		Object renderingHint = getNodeView().getMap().setEdgesRenderingHint(g);
+		
+		// Enable anti-aliasing for smooth rendering
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		
 		paintSelected(g);
 		paintDragOver(g);
 
-		// change to bold stroke
-		// g.setStroke(BOLD_STROKE); // Changed by Daniel
-
-		// Draw a standard node
-		g.setColor(model.getEdge().getColor());
-		// g.drawOval(0,0,size.width-1,size.height-1); // Changed by Daniel
-
-		// return to std stroke
+		// Draw a modern styled node with shadow and rounded corners
+		Color edgeColor = model.getEdge().getColor();
+		int arcWidth = getNodeView().getMap().getZoomed(16);
+		int arcHeight = getNodeView().getMap().getZoomed(16);
+		
+		// Draw shadow for modern look
+		if (!isCurrentlyPrinting()) {
+			drawShadow(g, arcWidth, arcHeight);
+		}
+		
+		// Draw border with theme-aware colors
 		g.setStroke(DEF_STROKE);
-		g.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+		g.setColor(edgeColor);
+		g.drawRoundRect(1, 1, getWidth() - 3, getHeight() - 3, arcWidth, arcHeight);
+		
 		Tools.restoreAntialiasing(g, renderingHint);
-
 		super.paint(g);
+	}
+	
+	/**
+	 * Draw a subtle shadow under the node for modern look
+	 */
+	private void drawShadow(Graphics2D g, int arcWidth, int arcHeight) {
+		ThemeManager themeManager = ThemeManager.getInstance();
+		Color shadowColor = themeManager.isDarkTheme() 
+			? new Color(0, 0, 0, 60) 
+			: new Color(0, 0, 0, 40);
+		
+		int shadowOffset = getNodeView().getMap().getZoomed(2);
+		g.setColor(shadowColor);
+		g.fillRoundRect(
+			shadowOffset, 
+			shadowOffset, 
+			getWidth() - 3, 
+			getHeight() - 3, 
+			arcWidth, 
+			arcHeight
+		);
 	}
 
 	public void paintSelected(Graphics2D graphics) {
 		super.paintSelected(graphics);
 		if (getNodeView().useSelectionColors()) {
-			graphics.setColor(MapView.standardSelectColor);
-			graphics.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10,
-					10);
+			ThemeManager themeManager = ThemeManager.getInstance();
+			Color selectionColor = themeManager.getColor(ThemeManager.VAR_ACCENT_PRIMARY);
+			
+			// Draw selection with glow effect
+			int arcWidth = getNodeView().getMap().getZoomed(16);
+			int arcHeight = getNodeView().getMap().getZoomed(16);
+			
+			// Outer glow
+			Color glowColor = new Color(
+				selectionColor.getRed(),
+				selectionColor.getGreen(),
+				selectionColor.getBlue(),
+				60
+			);
+			graphics.setColor(glowColor);
+			graphics.fillRoundRect(-2, -2, getWidth() + 3, getHeight() + 3, arcWidth + 4, arcHeight + 4);
+			
+			// Inner selection fill
+			graphics.setColor(new Color(
+				selectionColor.getRed(),
+				selectionColor.getGreen(),				selectionColor.getBlue(),
+				30
+			));
+			graphics.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arcWidth, arcHeight);
+			
+			// Selection border
+			graphics.setColor(selectionColor);
+			graphics.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arcWidth, arcHeight);
 		}
 	}
 
 	protected void paintBackground(Graphics2D graphics, Color color) {
-		graphics.setColor(color);
-		graphics.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+		ThemeManager themeManager = ThemeManager.getInstance();
+		int arcWidth = getNodeView().getMap().getZoomed(16);
+		int arcHeight = getNodeView().getMap().getZoomed(16);
+		
+		// Use theme-aware background color if node has no specific color
+		Color fillColor = color;
+		if (fillColor == null || fillColor.equals(Color.WHITE)) {
+			fillColor = themeManager.getColor(ThemeManager.VAR_BG_SURFACE);
+		}
+		
+		graphics.setColor(fillColor);
+		graphics.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arcWidth, arcHeight);
 	}
 
 	Point getLeftPoint() {

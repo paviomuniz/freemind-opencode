@@ -588,9 +588,20 @@ public class HtmlTools {
 
 	/** \0 is not allowed: */
 	public static String makeValidXml(String pXmlNoteText) {
-		return pXmlNoteText.replaceAll("\0", "").replaceAll("&#0;", "");
+		if (pXmlNoteText == null || pXmlNoteText.isEmpty()) {
+			return pXmlNoteText;
+		}
+		// First replace null characters
+		String result = pXmlNoteText.replaceAll("\0", "").replaceAll("&#0;", "");
+		
+		// Handle UTF-16 surrogate pairs (used by emoji) - remove invalid XML character references
+		// Surrogate pairs appear as &#55357;&#56908; (0xD83D 0xDE80) which are invalid in XML
+		// Match high surrogates (0xD800-0xDBFF) and their following low surrogates
+		result = result.replaceAll("&#(\\d{5});", "");  // Remove high surrogate refs
+		
+		return result;
 	}
-
+	
 	public static String replaceIllegalXmlCharacters(String fileContents) {
 		// replace &xa; by newline.
 		fileContents = fileContents.replaceAll("&#x0*[Aa];", "\n");

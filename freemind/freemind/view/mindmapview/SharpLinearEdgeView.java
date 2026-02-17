@@ -23,6 +23,8 @@ package freemind.view.mindmapview;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
+import freemind.ui.theme.ThemeColorUtil;
+
 /**
  * This class represents a sharp Edge of a MindMap.
  */
@@ -44,6 +46,11 @@ public class SharpLinearEdgeView extends EdgeView {
 	}
 
 	public Color getColor() {
-		return getModel().getColor();
+		Color edgeColor = getModel().getColor();
+		// Use theme-aware color if no specific edge color is set
+		if (edgeColor == null) {
+			edgeColor = ThemeColorUtil.getTextSecondary(Color.GRAY);
+		}
+		return edgeColor;
 	}
 }

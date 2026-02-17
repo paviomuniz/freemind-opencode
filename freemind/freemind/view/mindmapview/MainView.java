@@ -168,12 +168,12 @@ public abstract class MainView extends JLabel {
 			if (getNodeView().isLeft()) {
 				graphics.setPaint(new GradientPaint(getWidth() * 3 / 4, 0,
 						getNodeView().getMap().getBackground(), getWidth() / 4,
-						0, NodeView.dragColor));
+						0, NodeView.getDragColor()));
 				graphics.fillRect(0, 0, getWidth() * 3 / 4, getHeight() - 1);
 			} else {
 				graphics.setPaint(new GradientPaint(getWidth() / 4, 0,
 						getNodeView().getMap().getBackground(),
-						getWidth() * 3 / 4, 0, NodeView.dragColor));
+						getWidth() * 3 / 4, 0, NodeView.getDragColor()));
 				graphics.fillRect(getWidth() / 4, 0, getWidth() - 1,
 						getHeight() - 1);
 			}
@@ -182,7 +182,7 @@ public abstract class MainView extends JLabel {
 		if (isDraggedOver == NodeView.DRAGGED_OVER_SIBLING) {
 			graphics.setPaint(new GradientPaint(0, getHeight() * 3 / 5,
 					getNodeView().getMap().getBackground(), 0, getHeight() / 5,
-					NodeView.dragColor));
+					NodeView.getDragColor()));
 			graphics.fillRect(0, 0, getWidth() - 1, getHeight() - 1);
 		}
 	}

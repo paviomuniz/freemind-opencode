@@ -90,6 +90,8 @@ import freemind.controller.actions.generated.instance.MindmapLastStateStorage;
 import freemind.main.FreeMindStarter.ProxyAuthenticator;
 import freemind.modes.ModeController;
 import freemind.preferences.FreemindPropertyListener;
+import freemind.ui.components.WelcomeScreen;
+import freemind.ui.theme.ThemeManager;
 import freemind.view.MapModule;
 import freemind.view.mindmapview.MapView;
 
@@ -295,7 +297,12 @@ public class FreeMind extends JFrame implements FreeMindMain, ActionListener {
 			Properties pUserPreferences, File pAutoPropertiesFile) {
 		super("FreeMind");
 		// Focus searcher
-		System.setSecurityManager(new FreeMindSecurityManager());
+		try {
+			System.setSecurityManager(new FreeMindSecurityManager());
+		} catch (UnsupportedOperationException e) {
+			// SecurityManager is deprecated in Java 17+ and not supported in Java 21+
+			// This is OK - the security manager was used for legacy applet support
+		}
 		defProps = pDefaultPreferences;
 		props = pUserPreferences;
 		autoPropertiesFile = pAutoPropertiesFile;
@@ -348,6 +355,14 @@ public class FreeMind extends JFrame implements FreeMindMain, ActionListener {
 		}
 		mFreeMindCommon = new FreeMindCommon(this);
 		Resources.createInstance(this);
+		
+		// Initialize theme system
+		ThemeManager.getInstance().loadThemePreference(pUserPreferences);
+		ThemeManager.getInstance().setThemeChangeListener((newTheme, variables) -> {
+			// Update UI when theme changes
+			SwingUtilities.updateComponentTreeUI(this);
+			repaint();
+		});
 	}
 
 	void init(FeedBack feedback) {
@@ -525,6 +540,9 @@ public class FreeMind extends JFrame implements FreeMindMain, ActionListener {
 
 	public void saveProperties(boolean pIsShutdown) {
 		try {
+			// Save theme preference
+			ThemeManager.getInstance().saveThemePreference(props);
+			
 			OutputStream out = new FileOutputStream(autoPropertiesFile);
 			final OutputStreamWriter outputStreamWriter = new OutputStreamWriter(
 					out, "8859_1");
@@ -1088,6 +1106,11 @@ public class FreeMind extends JFrame implements FreeMindMain, ActionListener {
 			pModeController.newMap();
 			pFeedBack.increase(FREE_MIND_PROGRESS_LOAD_MAPS, null);
 		}
+		
+		// Show welcome screen if no map is loaded and this is not a restore
+		if (!fileLoaded && args.length == 0) {
+			showWelcomeScreen(pModeController);
+		}
 	}
 
 	private LastStateStorageManagement getLastStateStorageManagement() {
@@ -1181,6 +1204,7 @@ public class FreeMind extends JFrame implements FreeMindMain, ActionListener {
 		} else {
 			logger.warning("Split type not known: " + splitProperty);
 		}
+		logger.info("Creating JSplitPane with type: " + (splitType == JSplitPane.VERTICAL_SPLIT ? "VERTICAL" : "HORIZONTAL"));
 		mSplitPane = new JSplitPane(splitType, mScrollPane, pMindMapComponent);
 		mSplitPane.setContinuousLayout(true);
 		mSplitPane.setOneTouchExpandable(false);
@@ -1189,6 +1213,9 @@ public class FreeMind extends JFrame implements FreeMindMain, ActionListener {
 		 * from resizing the window.
 		 */
 		mSplitPane.setResizeWeight(1.0d);
+		// Ensure mind map has minimum size
+		mScrollPane.setMinimumSize(new Dimension(100, 100));
+		pMindMapComponent.setMinimumSize(new Dimension(100, 100));
 		// split panes eat F8 and F6. This is corrected here.
 		Tools.correctJSplitPaneKeyMap();
 		mContentComponent = mSplitPane;
@@ -1199,6 +1226,7 @@ public class FreeMind extends JFrame implements FreeMindMain, ActionListener {
 		addComponentListener(new ComponentAdapter(){
 		@Override
 			public void componentResized(ComponentEvent pE) {
+				logger.info("Window resized, resetting split location");
 				setSplitLocation();
 				removeComponentListener(this);
 			}	
@@ -1209,9 +1237,47 @@ public class FreeMind extends JFrame implements FreeMindMain, ActionListener {
 	private void setSplitLocation() {
 		int splitPanePosition = getIntProperty(SPLIT_PANE_POSITION, -1);
 		int lastSplitPanePosition = getIntProperty(SPLIT_PANE_LAST_POSITION, -1);
-		if (mSplitPane != null && splitPanePosition != -1 && lastSplitPanePosition != -1) {
-			mSplitPane.setDividerLocation(splitPanePosition);
-			mSplitPane.setLastDividerLocation(lastSplitPanePosition);
+		logger.info("setSplitLocation called - saved position: " + splitPanePosition + ", last: " + lastSplitPanePosition);
+		if (mSplitPane != null) {
+			int currentHeight = mSplitPane.getHeight();
+			int currentWidth = mSplitPane.getWidth();
+			logger.info("SplitPane size - width: " + currentWidth + ", height: " + currentHeight);
+			
+			// If split pane doesn't have size yet, defer setting divider
+			if (currentHeight <= 0 || currentWidth <= 0) {
+				logger.info("Split pane has no size yet, deferring...");
+				SwingUtilities.invokeLater(new Runnable() {
+					public void run() {
+						setSplitLocation();
+					}
+				});
+				return;
+			}
+			
+			if (splitPanePosition != -1 && lastSplitPanePosition != -1) {
+				// Ensure the divider doesn't hide the mind map completely
+				int maxDividerLocation = mSplitPane.getMaximumDividerLocation();
+				int minDividerLocation = mSplitPane.getMinimumDividerLocation();
+				logger.info("Divider bounds - min: " + minDividerLocation + ", max: " + maxDividerLocation);
+				if (splitPanePosition < minDividerLocation || splitPanePosition > maxDividerLocation) {
+					// Reset to default if saved position is invalid
+					logger.info("Saved position invalid, using default 0.75");
+					mSplitPane.setDividerLocation(0.75);
+				} else {
+					logger.info("Using saved position: " + splitPanePosition);
+					mSplitPane.setDividerLocation(splitPanePosition);
+					mSplitPane.setLastDividerLocation(lastSplitPanePosition);
+				}
+			} else {
+				// Set default divider location (75% for top component, 25% for bottom)
+				logger.info("No saved position, using default 0.75");
+				mSplitPane.setDividerLocation(0.75);
+			}
+			int finalDividerLocation = mSplitPane.getDividerLocation();
+			logger.info("Final divider location: " + finalDividerLocation);
+			// Ensure proper layout
+			mSplitPane.revalidate();
+			mSplitPane.repaint();
 		}
 	}
 
@@ -1269,6 +1335,32 @@ public class FreeMind extends JFrame implements FreeMindMain, ActionListener {
 
 	public List<Logger> getLoggerList() {
 		return Collections.unmodifiableList(mLoggerList);
+	}
+	
+	/**
+	 * Show the welcome screen on startup when no files are loaded
+	 */
+	private void showWelcomeScreen(ModeController pModeController) {
+		WelcomeScreen welcome = new WelcomeScreen(this);
+		
+		welcome.setOnNewMap(() -> {
+			pModeController.newMap();
+		});
+		
+		// Open file - handled by menu
+		welcome.setOnOpenFile(() -> {
+			// Close welcome and user will use File > Open
+		});
+		
+		welcome.setOnOpenRecent(file -> {
+			try {
+				controller.getLastOpenedList().open(file.getAbsolutePath());
+			} catch (Exception e) {
+				Resources.getInstance().logException(e);
+			}
+		});
+		
+		welcome.setVisible(true);
 	}
 
 }

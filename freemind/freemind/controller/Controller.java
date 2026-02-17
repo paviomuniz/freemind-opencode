@@ -101,6 +101,7 @@ import freemind.modes.browsemode.BrowseMode;
 import freemind.preferences.FreemindPropertyListener;
 import freemind.preferences.layout.OptionPanel;
 import freemind.preferences.layout.OptionPanel.OptionPanelFeedback;
+import freemind.ui.theme.ThemeManager;
 import freemind.view.MapModule;
 import freemind.view.mindmapview.MapView;
 
@@ -246,6 +247,7 @@ public class Controller implements MapModuleChangeObserver {
 		toggleMenubar = new ToggleMenubarAction(this);
 		toggleToolbar = new ToggleToolbarAction(this);
 		toggleLeftToolbar = new ToggleLeftToolbarAction(this);
+		toggleTheme = new ToggleThemeAction(this);
 		optionAntialiasAction = new OptionAntialiasAction();
 		optionHTMLExportFoldingAction = new OptionHTMLExportFoldingAction(this);
 		optionSelectionMechanismAction = new OptionSelectionMechanismAction(
@@ -928,7 +930,13 @@ public class Controller implements MapModuleChangeObserver {
 		page.setEnabled(enabled && isPrintingAllowed);
 		close.setEnabled(enabled);
 		moveToRoot.setEnabled(enabled);
-		((MainToolBar) getToolBar()).setAllActions(enabled);
+		// Handle both MainToolBar and ModernToolBar
+		Object toolbar = getToolBar();
+		if (toolbar instanceof MainToolBar) {
+			((MainToolBar) toolbar).setAllActions(enabled);
+		} else if (toolbar instanceof freemind.ui.components.ModernToolBar) {
+			((freemind.ui.components.ModernToolBar) toolbar).setAllActions(enabled);
+		}
 		showSelectionAsRectangle.setEnabled(enabled);
 	}
 
@@ -1091,8 +1099,8 @@ public class Controller implements MapModuleChangeObserver {
 
 		PrintAction(Controller controller, boolean isDlg) {
 			super(isDlg ? controller.getResourceString("print_dialog")
-					: controller.getResourceString("print"), freemind.view.ImageFactory.getInstance().createIcon(
-					getResource("images/fileprint.png")));
+					: controller.getResourceString("print"), freemind.view.ImageFactory.getInstance().createSVGIcon(
+					"fileprint", 24));
 			setEnabled(false);
 			this.isDlg = isDlg;
 		}
@@ -1362,8 +1370,8 @@ public class Controller implements MapModuleChangeObserver {
 
 	private class NavigationPreviousMapAction extends AbstractAction {
 		NavigationPreviousMapAction(Controller controller) {
-			super(controller.getResourceString("previous_map"), freemind.view.ImageFactory.getInstance().createIcon(
-					getResource("images/1leftarrow.png")));
+			super(controller.getResourceString("previous_map"), freemind.view.ImageFactory.getInstance().createSVGIcon(
+					"leftarrow", 24));
 			setEnabled(false);
 		}
 
@@ -1374,8 +1382,8 @@ public class Controller implements MapModuleChangeObserver {
 
 	private class ShowFilterToolbarAction extends AbstractAction {
 		ShowFilterToolbarAction(Controller controller) {
-			super(getResourceString("filter_toolbar"), freemind.view.ImageFactory.getInstance().createIcon(
-					getResource("images/filter.gif")));
+			super(getResourceString("filter_toolbar"), freemind.view.ImageFactory.getInstance().createSVGIcon(
+					"editfilter", 24));
 		}
 
 		public void actionPerformed(ActionEvent event) {
@@ -1389,8 +1397,8 @@ public class Controller implements MapModuleChangeObserver {
 
 	private class NavigationNextMapAction extends AbstractAction {
 		NavigationNextMapAction(Controller controller) {
-			super(controller.getResourceString("next_map"), freemind.view.ImageFactory.getInstance().createIcon(
-					getResource("images/1rightarrow.png")));
+			super(controller.getResourceString("next_map"), freemind.view.ImageFactory.getInstance().createSVGIcon(
+					"rightarrow", 24));
 			setEnabled(false);
 		}
 
@@ -1401,8 +1409,8 @@ public class Controller implements MapModuleChangeObserver {
 
 	private class NavigationMoveMapLeftAction extends AbstractAction {
 		NavigationMoveMapLeftAction(Controller controller) {
-			super(controller.getResourceString("move_map_left"), freemind.view.ImageFactory.getInstance().createIcon(
-					getResource("images/draw-arrow-back.png")));
+			super(controller.getResourceString("move_map_left"), freemind.view.ImageFactory.getInstance().createSVGIcon(
+					"leftarrow", 24));
 			setEnabled(false);
 		}
 
@@ -1419,7 +1427,7 @@ public class Controller implements MapModuleChangeObserver {
 	private class NavigationMoveMapRightAction extends AbstractAction {
 		NavigationMoveMapRightAction(Controller controller) {
 			super(controller.getResourceString("move_map_right"),
-					freemind.view.ImageFactory.getInstance().createIcon(getResource("images/draw-arrow-forward.png")));
+					freemind.view.ImageFactory.getInstance().createSVGIcon("rightarrow", 24));
 			setEnabled(false);
 		}
 
@@ -1531,6 +1539,31 @@ public class Controller implements MapModuleChangeObserver {
 
 		public boolean isSelected(JMenuItem pCheckItem, Action pAction) {
 			return leftToolbarVisible;
+		}
+	}
+	
+	public Action toggleTheme;
+	
+	private class ToggleThemeAction extends AbstractAction implements
+			MenuItemSelectedListener {
+		ToggleThemeAction(Controller controller) {
+			super("Toggle Dark Mode");
+			setEnabled(true);
+		}
+
+		public void actionPerformed(ActionEvent event) {
+			ThemeManager tm = ThemeManager.getInstance();
+			tm.toggleTheme();
+			// Force complete UI refresh
+			javax.swing.JFrame frame = (javax.swing.JFrame) getFrame();
+			frame.invalidate();
+			frame.validate();
+			javax.swing.SwingUtilities.updateComponentTreeUI(frame);
+			frame.repaint();
+		}
+
+		public boolean isSelected(JMenuItem pCheckItem, Action pAction) {
+			return ThemeManager.getInstance().isDarkTheme();
 		}
 	}
 
@@ -1777,8 +1810,8 @@ public class Controller implements MapModuleChangeObserver {
 		private final String url;
 
 		OpenURLAction(Controller controller, String description, String url) {
-			super(description, freemind.view.ImageFactory.getInstance().createIcon(
-					controller.getResource("images/Link.png")));
+			super(description, freemind.view.ImageFactory.getInstance().createSVGIcon(
+					"link", 24));
 			c = controller;
 			this.url = url;
 		}
